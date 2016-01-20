@@ -159,8 +159,14 @@ class JsonApiDataStore {
     delete model._placeHolder;
 
     for (key in rec.attributes) {
-      model._attributes.push(key);
+      if (model._attributes.indexOf(key) === -1) {
+        model._attributes.push(key);
+      }
       model[key] = rec.attributes[key];
+    }
+
+    if (rec.links) {
+      model._links = rec.links;
     }
 
     if (rec.relationships) {
@@ -177,7 +183,8 @@ class JsonApiDataStore {
           }
         }
         if (rel.links) {
-          console.log("Warning: Links not implemented yet.");
+          model._relationship_links = model._relationship_links || {};
+          model._relationship_links[key] = rel.links;
         }
       }
     }
