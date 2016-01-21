@@ -6,7 +6,7 @@
     "Lucas Hosseini <lucas.hosseini@gmail.com>"
   ],
   "description": "JavaScript client-side JSON API data handling made easy.",
-  "main": "dist/jsonapi-datastore.js",
+  "main": "dist/ng-jsonapi-datastore.js",
   "moduleType": [
     "globals"
   ],
