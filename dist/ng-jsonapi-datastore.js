@@ -10,7 +10,7 @@
   /**
    * @class JsonApiDataStoreModel
    */
-  "use strict";
+  'use strict';
 
   var _createClass = (function() {
     function defineProperties(target, props) {
@@ -18,7 +18,7 @@
         var descriptor = props[i];
         descriptor.enumerable = descriptor.enumerable || false;
         descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
+        if ('value' in descriptor) descriptor.writable = true;
         Object.defineProperty(target, descriptor.key, descriptor);
       }
     }
@@ -31,7 +31,7 @@
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+      throw new TypeError('Cannot call a class as a function');
     }
   }
 
@@ -66,7 +66,7 @@
      */
 
     _createClass(JsonApiDataStoreModel, [{
-      key: "serialize",
+      key: 'serialize',
       value: function serialize(opts) {
         var self = this,
           res = {
@@ -114,13 +114,55 @@
       }
 
       /**
+       * Serialize a model to a generic, non JSONAPI-compliant object.
+       * @method serializeGeneric
+       * @param {object} opts The options for serialization.  Available properties:
+       *
+       *  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
+       *  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
+       * @return {object} object
+       */
+    }, {
+      key: 'serializeGeneric',
+      value: function serializeGeneric(opts) {
+        var self = this,
+          res = {},
+          key;
+
+        opts = opts || {};
+        opts.attributes = opts.attributes || this._attributes;
+        opts.relationships = opts.relationships || this._relationships;
+
+        if (this.id !== undefined) res.id = this.id;
+        if (opts.attributes.length !== 0) res.attributes = {};
+        if (opts.relationships.length !== 0) res.relationships = {};
+
+        opts.attributes.forEach(function(key) {
+          res.attributes[key] = self[key];
+        });
+
+        opts.relationships.forEach(function(key) {
+          function relationshipIdentifier(model) {
+            return +model.id;
+          }
+          if (self[key].constructor === Array) {
+            res.relationships[key] = self[key].map(relationshipIdentifier);
+          } else {
+            res.attributes[key + 'Id'] = +relationshipIdentifier(self[key]);
+          }
+        });
+
+        return res;
+      }
+
+      /**
        * Set/add an attribute to a model.
        * @method setAttribute
        * @param {string} attrName The name of the attribute.
        * @param {object} value The value of the attribute.
        */
     }, {
-      key: "setAttribute",
+      key: 'setAttribute',
       value: function setAttribute(attrName, value) {
         if (this[attrName] === undefined) this._attributes.push(attrName);
         this[attrName] = value;
@@ -133,7 +175,7 @@
        * @param {object} models The linked model(s).
        */
     }, {
-      key: "setRelationship",
+      key: 'setRelationship',
       value: function setRelationship(relName, models) {
         if (this[relName] === undefined) this._relationships.push(relName);
         this[relName] = models;
@@ -161,7 +203,7 @@
      */
 
     _createClass(JsonApiDataStore, [{
-      key: "destroy",
+      key: 'destroy',
       value: function destroy(model) {
         delete this.graph[model._type][model.id];
       }
@@ -174,7 +216,7 @@
        * @return {object} The corresponding model if present, and null otherwise.
        */
     }, {
-      key: "find",
+      key: 'find',
       value: function find(type, id) {
         if (!this.graph[type] || !this.graph[type][id]) return null;
         return this.graph[type][id];
@@ -187,7 +229,7 @@
        * @return {object} Array of the corresponding model if present, and empty array otherwise.
        */
     }, {
-      key: "findAll",
+      key: 'findAll',
       value: function findAll(type) {
         var self = this;
 
@@ -202,12 +244,12 @@
        * @method reset
        */
     }, {
-      key: "reset",
+      key: 'reset',
       value: function reset() {
         this.graph = {};
       }
     }, {
-      key: "initModel",
+      key: 'initModel',
       value: function initModel(type, id) {
         this.graph[type] = this.graph[type] || {};
         this.graph[type][id] = this.graph[type][id] || new JsonApiDataStoreModel(type, id);
@@ -215,7 +257,7 @@
         return this.graph[type][id];
       }
     }, {
-      key: "syncRecord",
+      key: 'syncRecord',
       value: function syncRecord(rec) {
         var self = this,
           model = this.initModel(rec.type, rec.id),
@@ -272,7 +314,7 @@
        * @return {object} The model/array of models corresponding to the payload's primary resource(s) and any metadata.
        */
     }, {
-      key: "syncWithMeta",
+      key: 'syncWithMeta',
       value: function syncWithMeta(payload) {
         var primary = payload.data,
           syncRecord = this.syncRecord.bind(this);
@@ -291,7 +333,7 @@
        * @return {object} The model/array of models corresponding to the payload's primary resource(s).
        */
     }, {
-      key: "sync",
+      key: 'sync',
       value: function sync(payload) {
         return this.syncWithMeta(payload).data;
       }

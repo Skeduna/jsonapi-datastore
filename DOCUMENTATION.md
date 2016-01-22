@@ -25,6 +25,20 @@ Serialize a model.
 
 * **object** JSONAPI-compliant object
 
+## serializeGeneric(opts)
+
+Serialize a model to a generic, non JSONAPI-compliant object.
+
+### Params:
+
+* **object** *opts* The options for serialization. Available properties: 
+ - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
+ - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
+
+### Return:
+
+* **object** object
+
 ## setAttribute(attrName, value)
 
 Set/add an attribute to a model.
