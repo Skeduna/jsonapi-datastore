@@ -61,6 +61,46 @@
   }
 
   /**
+   * Serialize a model to a generic, non JSONAPI-compliant object.
+   * @method serializeGeneric
+   * @param {object} opts The options for serialization.  Available properties:
+   *
+   *  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
+   *  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
+   * @return {object} object
+   */
+  serializeGeneric(opts) {
+    var self = this,
+        res = {},
+        key;
+
+    opts = opts || {};
+    opts.attributes = opts.attributes || this._attributes;
+    opts.relationships = opts.relationships || this._relationships;
+
+    if (this.id !== undefined) res.id = this.id;
+    if (opts.attributes.length !== 0) res.attributes = {};
+    if (opts.relationships.length !== 0) res.relationships = {};
+
+    opts.attributes.forEach(function (key) {
+      res.attributes[key] = self[key];
+    });
+
+    opts.relationships.forEach(function (key) {
+      function relationshipIdentifier(model) {
+        return +model.id;
+      }
+      if (self[key].constructor === Array) {
+        res.relationships[key] = self[key].map(relationshipIdentifier);
+      } else {
+        res.attributes[key + 'Id'] = +relationshipIdentifier(self[key]);
+      }
+    });
+
+    return res;
+  }
+
+  /**
    * Set/add an attribute to a model.
    * @method setAttribute
    * @param {string} attrName The name of the attribute.
