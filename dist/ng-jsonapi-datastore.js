@@ -3,7 +3,7 @@
     .module('beauby.jsonApiDataStore', [])
     .factory('JsonApiDataStore', function() {
       return {
-        store: new JsonApiDataStore(),
+        Store: JsonApiDataStore,
         Model: JsonApiDataStoreModel
       };
     });
@@ -49,6 +49,8 @@
       this._type = type;
       this._attributes = [];
       this._relationships = [];
+      this._protectedAttributes = [];
+      this._protectedRelationships = [];
     }
 
     /**
@@ -166,6 +168,7 @@
       value: function setAttribute(attrName, value) {
         if (this[attrName] === undefined) this._attributes.push(attrName);
         this[attrName] = value;
+        this._protectedAttributes[attrName] = value;
       }
 
       /**
@@ -179,6 +182,7 @@
       value: function setRelationship(relName, models) {
         if (this[relName] === undefined) this._relationships.push(relName);
         this[relName] = models;
+        this._protectedRelationships[relName] = models;
       }
     }]);
 
@@ -278,6 +282,7 @@
             model._attributes.push(key);
           }
           model[key] = rec.attributes[key];
+          model._protectedAttributes[key] = rec.attributes[key];
         }
 
         if (rec.links) {
@@ -293,8 +298,16 @@
                 model[key] = null;
               } else if (rel.data.constructor === Array) {
                 model[key] = rel.data.map(findOrInit);
+                var relation;
+                for (relation in rel.data) {
+                  if (typeof model._protectedRelationships[key] === 'undefined') {
+                    model._protectedRelationships[key] = [];
+                  }
+                  model._protectedRelationships[key].push(self.initModel(rel.data[relation].type, rel.data[relation].id));
+                }
               } else {
                 model[key] = findOrInit(rel.data);
+                model._protectedRelationships[key] = self.initModel(rel.data.type, rel.data.id);
               }
             }
             if (rel.links) {
