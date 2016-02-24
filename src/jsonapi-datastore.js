@@ -12,8 +12,9 @@
     this._type = type;
     this._attributes = [];
     this._relationships = [];
+    this._references = [];
     this._protectedAttributes = {};
-    this._protectedRelationships = [];
+    this._protectedRelationships = {};
   }
 
   /**
@@ -125,6 +126,13 @@
     this[relName] = models;
     this._protectedRelationships[relName] = models;
   }
+
+  restoreAttributes() {
+    var self = this;
+    self._protectedAttributes.forEach(function(value, key) {
+      self._attributes[key] = value;
+    });
+  }
 }
 
 /**
@@ -144,7 +152,19 @@ class JsonApiDataStore {
    * @param {object} model The model to destroy.
    */
   destroy(model) {
-    delete this.graph[model._type][model.id];
+    var self = this;
+    this.graph[model._type][model.id]._references.map(function(rel) {
+      if (self.graph[rel.type][rel.id][rel.relation].constructor === Array) {
+        self.graph[rel.type][rel.id][rel.relation].forEach(function(val, idx) {
+          if (val.id === model.id) {
+            self.graph[rel.type][rel.id][rel.relation].splice(idx, 1);
+          }
+        });
+      } else if (self.graph[rel.type][rel.id][rel.relation].id === model.id) {
+        self.graph[rel.type][rel.id][rel.relation] = new JsonApiDataStoreModel(self.graph[rel.type][rel.id][rel.relation]._type);
+      }
+    });
+    delete self.graph[model._type][model.id];
   }
 
   /**
@@ -227,7 +247,15 @@ class JsonApiDataStore {
             model[key] = null;
           } else if (rel.data.constructor === Array) {
             model[key] = rel.data.map(findOrInit);
-            model._protectedRelationships[key] = rel.data.map(initOnly);
+
+            model[key] = [];
+            for (var idx in rel.data) {
+              var record = findOrInit(rel.data[idx]);
+              record._references.push({id: model.id, type: model._type, relation: key});
+              model[key].push(record);
+            }
+
+            //model._protectedRelationships[key] = rel.data.map(initOnly);
 
             // var relation;
             // for (relation in rel.data) {
@@ -238,7 +266,10 @@ class JsonApiDataStore {
             // }
 
           } else {
-            model[key] = findOrInit(rel.data);
+            var ref = findOrInit(rel.data);
+            ref._references.push({id: model.id, type: model._type, relation: key});
+            model[key] = ref;
+
             model._protectedRelationships[key] = self.initModel(rel.data.type, rel.data.id);
           }
         }
