@@ -361,19 +361,124 @@ describe('JsonApiDataStore', () => {
   });
 
   describe('.destroy()', () => {
-    var store = new JsonApiDataStore(),
-        payload = {
-          data: {
-            type: 'article',
-            id: 1337
-          }
-        };
+    context('when given a model', () => {
+      var store = new JsonApiDataStore(),
+          payload = {
+            data: {
+              type: 'article',
+              id: 1337
+            }
+          };
 
-    it('should destroy an existing model', () => {
-      store.sync(payload);
-      store.destroy(store.find('article', 1337));
-      var article = store.find('article', 1337);
-      expect(article).to.eq(null);
+      it('should destroy that model', () => {
+        store.sync(payload);
+        store.destroy(store.find('article', 1337));
+        var article = store.find('article', 1337);
+        expect(article).to.eq(null);
+      });
+    });
+
+    context('when given a model in a to-one relationship', () => {
+      var store = new JsonApiDataStore(),
+          payload = {
+            data: [{
+              type: 'article',
+              id: 1337,
+              attributes: {
+                title: 'Leet article'
+              },
+              relationships: {
+                related_article: {
+                  data: {
+                    type: 'article',
+                    id: 1338
+                  }
+                }
+              }
+            }, {
+              type: 'article',
+              id: 1338,
+              attributes: {
+                title: 'Better article'
+              },
+              relationships: {
+                related_article: {
+                  data: {
+                    type: 'article',
+                    id: 1337
+                  }
+                }
+              }
+            }]
+          };
+
+      it('should destroy related property instances', () => {
+        var articles = store.sync(payload);
+        store.destroy(articles[1]);
+        expect(articles[0].related_article).to.eq(null);
+      });
+    });
+
+    context('when given a model in a to-many relationship', () => {
+      var store = new JsonApiDataStore(),
+          payloadA = {
+            data: {
+              type: 'article',
+              id: 1337,
+              attributes: {
+                title: 'Leet article'
+              },
+              relationships: {
+                authors: {
+                  data: [{
+                    type: 'authors',
+                    id: 'AUT-001'
+                  }, {
+                    type: 'authors',
+                    id: 'AUT-003'
+                  }]
+                }
+              }
+            }
+          },
+          payloadB = {
+            data: [{
+              type: 'authors',
+              id: 'AUT-001',
+              attributes: {
+                name: 'Art'
+              },
+            }, {
+              type: 'authors',
+              id: 'AUT-002',
+              attributes: {
+                name: 'Bob'
+              },
+            }, {
+              type: 'authors',
+              id: 'AUT-003',
+              attributes: {
+                name: 'Cal'
+              },
+            }],
+          };
+
+      it('should destroy related array element instances', () => {
+        var article = store.sync(payloadA),
+            authors = store.sync(payloadB);
+        expect(article.authors.length).to.eq(2);
+        expect(article.authors[0].name).to.eq('Art');
+        expect(article.authors[1].name).to.eq('Cal');
+        store.destroy(authors[0]);
+        expect(article.authors.length).to.eq(1);
+        expect(article.authors[0].name).to.eq('Cal');
+        store.destroy(authors[1]);
+        expect(article.authors.length).to.eq(1);
+        expect(article.authors[0].name).to.eq('Cal');
+        store.destroy(authors[2]);
+        expect(article.authors.length).to.eq(0);
+        expect(article.authors).to.deep.eq([]);
+      });
     });
   });
 });

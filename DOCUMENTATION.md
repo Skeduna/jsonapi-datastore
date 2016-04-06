@@ -1,6 +1,6 @@
 
 
-<!-- Start src\jsonapi-datastore.js -->
+<!-- Start src/jsonapi-datastore.js -->
 
 ## JsonApiDataStoreModel
 
@@ -24,20 +24,6 @@ Serialize a model.
 ### Return:
 
 * **object** JSONAPI-compliant object
-
-## serializeGeneric(opts)
-
-Serialize a model to a generic, non JSONAPI-compliant object.
-
-### Params:
-
-* **object** *opts* The options for serialization. Available properties: 
- - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
- - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
-
-### Return:
-
-* **object** object
 
 ## setAttribute(attrName, value)
 
@@ -122,5 +108,5 @@ Sync a JSONAPI-compliant payload with the store.
 
 * **object** The model/array of models corresponding to the payload's primary resource(s).
 
-<!-- End src\jsonapi-datastore.js -->
+<!-- End src/jsonapi-datastore.js -->
 

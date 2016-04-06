@@ -10,7 +10,7 @@
   /**
    * @class JsonApiDataStoreModel
    */
-  'use strict';
+  "use strict";
 
   var _createClass = (function() {
     function defineProperties(target, props) {
@@ -18,7 +18,7 @@
         var descriptor = props[i];
         descriptor.enumerable = descriptor.enumerable || false;
         descriptor.configurable = true;
-        if ('value' in descriptor) descriptor.writable = true;
+        if ("value" in descriptor) descriptor.writable = true;
         Object.defineProperty(target, descriptor.key, descriptor);
       }
     }
@@ -31,7 +31,7 @@
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
-      throw new TypeError('Cannot call a class as a function');
+      throw new TypeError("Cannot call a class as a function");
     }
   }
 
@@ -69,7 +69,7 @@
      */
 
     _createClass(JsonApiDataStoreModel, [{
-      key: 'serialize',
+      key: "serialize",
       value: function serialize(opts) {
         var self = this,
           res = {
@@ -78,6 +78,13 @@
             }
           },
           key;
+
+        function relationshipIdentifier(model) {
+          return {
+            type: model._type,
+            id: model.id
+          };
+        }
 
         opts = opts || {};
         opts.attributes = opts.attributes || this._attributes;
@@ -92,12 +99,6 @@
         });
 
         opts.relationships.forEach(function(key) {
-          function relationshipIdentifier(model) {
-            return {
-              type: model._type,
-              id: model.id
-            };
-          }
           if (!self[key]) {
             res.data.relationships[key] = {
               data: null
@@ -117,55 +118,13 @@
       }
 
       /**
-       * Serialize a model to a generic, non JSONAPI-compliant object.
-       * @method serializeGeneric
-       * @param {object} opts The options for serialization.  Available properties:
-       *
-       *  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
-       *  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
-       * @return {object} object
-       */
-    }, {
-      key: 'serializeGeneric',
-      value: function serializeGeneric(opts) {
-        var self = this,
-          res = {},
-          key;
-
-        opts = opts || {};
-        opts.attributes = opts.attributes || this._attributes;
-        opts.relationships = opts.relationships || this._relationships;
-
-        if (this.id !== undefined) res.id = this.id;
-        if (opts.attributes.length !== 0) res.attributes = {};
-        if (opts.relationships.length !== 0) res.relationships = {};
-
-        opts.attributes.forEach(function(key) {
-          res.attributes[key] = self[key];
-        });
-
-        opts.relationships.forEach(function(key) {
-          function relationshipIdentifier(model) {
-            return +model.id;
-          }
-          if (self[key].constructor === Array) {
-            res.relationships[key] = self[key].map(relationshipIdentifier);
-          } else {
-            res.attributes[key + 'Id'] = +relationshipIdentifier(self[key]);
-          }
-        });
-
-        return res;
-      }
-
-      /**
        * Set/add an attribute to a model.
        * @method setAttribute
        * @param {string} attrName The name of the attribute.
        * @param {object} value The value of the attribute.
        */
     }, {
-      key: 'setAttribute',
+      key: "setAttribute",
       value: function setAttribute(attrName, value) {
         if (this[attrName] === undefined) this._attributes.push(attrName);
         this[attrName] = value;
@@ -179,19 +138,11 @@
        * @param {object} models The linked model(s).
        */
     }, {
-      key: 'setRelationship',
+      key: "setRelationship",
       value: function setRelationship(relName, models) {
         if (this[relName] === undefined) this._relationships.push(relName);
         this[relName] = models;
         this._protectedRelationships[relName] = models;
-      }
-    }, {
-      key: 'restoreAttributes',
-      value: function restoreAttributes() {
-        var self = this;
-        self._protectedAttributes.forEach(function(value, key) {
-          self._attributes[key] = value;
-        });
       }
     }]);
 
@@ -216,18 +167,20 @@
      */
 
     _createClass(JsonApiDataStore, [{
-      key: 'destroy',
+      key: "destroy",
       value: function destroy(model) {
         var self = this;
-        this.graph[model._type][model.id]._references.map(function(rel) {
-          if (self.graph[rel.type][rel.id][rel.relation].constructor === Array) {
-            self.graph[rel.type][rel.id][rel.relation].forEach(function(val, idx) {
-              if (val.id === model.id) {
-                self.graph[rel.type][rel.id][rel.relation].splice(idx, 1);
-              }
+
+        model._references.map(function(ref) {
+          var referrer = self.graph[ref.type][ref.id],
+            referral = referrer[ref.relation];
+
+          if (referral === model) {
+            referrer.setRelationship(ref.relation, null);
+          } else if (referral.constructor === Array) {
+            self.graph[ref.type][ref.id][ref.relation] = referral.filter(function(related) {
+              return related !== model;
             });
-          } else if (self.graph[rel.type][rel.id][rel.relation].id === model.id) {
-            self.graph[rel.type][rel.id][rel.relation] = new JsonApiDataStoreModel(self.graph[rel.type][rel.id][rel.relation]._type);
           }
         });
         delete self.graph[model._type][model.id];
@@ -241,7 +194,7 @@
        * @return {object} The corresponding model if present, and null otherwise.
        */
     }, {
-      key: 'find',
+      key: "find",
       value: function find(type, id) {
         if (!this.graph[type] || !this.graph[type][id]) return null;
         return this.graph[type][id];
@@ -254,7 +207,7 @@
        * @return {object} Array of the corresponding model if present, and empty array otherwise.
        */
     }, {
-      key: 'findAll',
+      key: "findAll",
       value: function findAll(type) {
         var self = this;
 
@@ -269,12 +222,12 @@
        * @method reset
        */
     }, {
-      key: 'reset',
+      key: "reset",
       value: function reset() {
         this.graph = {};
       }
     }, {
-      key: 'initModel',
+      key: "initModel",
       value: function initModel(type, id) {
         this.graph[type] = this.graph[type] || {};
         this.graph[type][id] = this.graph[type][id] || new JsonApiDataStoreModel(type, id);
@@ -282,7 +235,7 @@
         return this.graph[type][id];
       }
     }, {
-      key: 'syncRecord',
+      key: "syncRecord",
       value: function syncRecord(rec) {
         var self = this,
           model = this.initModel(rec.type, rec.id),
@@ -296,7 +249,8 @@
           return self.graph[resource.type][resource.id];
         }
 
-        function initOnly(resource) {
+        function onlyInit(resource) {
+          //Out-Of-Graph for change detection.
           return new JsonApiDataStoreModel(resource.type, resource.id);
         }
 
@@ -316,46 +270,39 @@
 
         if (rec.relationships) {
           for (key in rec.relationships) {
-            var rel = rec.relationships[key];
+            var rel = rec.relationships[key],
+              ref;
+
             if (rel.data !== undefined) {
               model._relationships.push(key);
               if (rel.data === null) {
                 model[key] = null;
+                model._protectedRelationships[key] = null;
               } else if (rel.data.constructor === Array) {
-                model[key] = rel.data.map(findOrInit);
-
                 model[key] = [];
-                for (var idx in rel.data) {
-                  var record = findOrInit(rel.data[idx]);
-                  record._references.push({
+                model._protectedRelationships[key] = [];
+                rel.data.forEach(function(related, idx) {
+                  ref = findOrInit(related);
+                  ref._references.push({
                     id: model.id,
                     type: model._type,
                     relation: key
                   });
-                  model[key].push(record);
-                }
-
-                //model._protectedRelationships[key] = rel.data.map(initOnly);
-
-                // var relation;
-                // for (relation in rel.data) {
-                //   if (typeof model._protectedRelationships[key] === 'undefined') {
-                //     model._protectedRelationships[key] = [];
-                //   }
-                //   model._protectedRelationships[key].push(self.initModel(rel.data[relation].type, rel.data[relation].id));
-                // }
+                  model[key].push(ref);
+                  model._protectedRelationships[key].push(onlyInit(related));
+                });
               } else {
-                var ref = findOrInit(rel.data);
+                ref = findOrInit(rel.data);
                 ref._references.push({
                   id: model.id,
                   type: model._type,
                   relation: key
                 });
                 model[key] = ref;
-
-                model._protectedRelationships[key] = self.initModel(rel.data.type, rel.data.id);
+                model._protectedRelationships[key] = onlyInit(rel.data);
               }
             }
+
             if (rel.links) {
               model._relationship_links = model._relationship_links || {};
               model._relationship_links[key] = rel.links;
@@ -373,7 +320,7 @@
        * @return {object} The model/array of models corresponding to the payload's primary resource(s) and any metadata.
        */
     }, {
-      key: 'syncWithMeta',
+      key: "syncWithMeta",
       value: function syncWithMeta(payload) {
         var primary = payload.data,
           syncRecord = this.syncRecord.bind(this);
@@ -392,7 +339,7 @@
        * @return {object} The model/array of models corresponding to the payload's primary resource(s).
        */
     }, {
-      key: 'sync',
+      key: "sync",
       value: function sync(payload) {
         return this.syncWithMeta(payload).data;
       }
