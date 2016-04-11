@@ -266,14 +266,16 @@
               ref;
 
             if (rel.data !== undefined) {
-              model._relationships.push(key);
+              if (model._relationships.indexOf(key) === -1) {
+                model._relationships.push(key);
+              }
               if (rel.data === null) {
                 model[key] = null;
                 model._protectedRelationships[key] = null;
               } else if (rel.data.constructor === Array) {
                 model[key] = [];
                 model._protectedRelationships[key] = [];
-                rel.data.forEach(function(related, idx) {
+                rel.data.forEach(function(related) {
                   ref = findOrInit(related);
                   ref._references.push({
                     id: model.id,
